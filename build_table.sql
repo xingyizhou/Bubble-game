@@ -6,3 +6,7 @@ create table bubble (
   r integer
 );
 
+create table user (
+  user_name char(8),
+  score integer
+);

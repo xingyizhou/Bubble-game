@@ -29,7 +29,7 @@ while True:
 		user_name = js['user_name']
 		image_id = js['image_id']
 		bubble_num = js['bubble_num']
-		print 'user_name, image_id, bubble_num', user_name, image_id, bubble_num
+		point = js['point']
 
 		db = MySQLdb.connect(host = 'localhost', user = 'root', passwd = '', db = 'bubble')
 		cur = db.cursor()
@@ -37,9 +37,21 @@ while True:
 			x = js['x{:d}'.format(i)]
 			y = js['y{:d}'.format(i)]
 			r = js['r{:d}'.format(i)]
-			print 'x, y, r', x, y, r
 			s = 'insert into bubble values("{:s}", {:d}, {:d}, {:d}, {:d})'.format(user_name, image_id, x, y, r)
 			cur.execute(s)
+
+		s = 'select score from user where user_name = "{:s}"'.format(user_name)
+		cur.execute(s)
+		res = cur.fetchall()
+		if len(res) == 0:
+			score = point
+			s = 'insert into user values("{:s}", {:d})'.format(user_name, point)
+		else :
+			score = res[0][0] + point
+			s = 'update user set score = score + {:d} where user_name = "{:s}"'.format(point, user_name)
+
+		cur.execute(s)
+
 		db.commit()
 		cur.close()
 		db.close()
@@ -63,7 +75,7 @@ while True:
 			img_id_2 = tmp
 			ans = 2
 
-		js = {'img_id_1': img_id_1, 'img_id_2': img_id_2, 'bubble_id': bubble_id, 'ans': ans}
+		js = {'img_id_1': img_id_1, 'img_id_2': img_id_2, 'bubble_id': bubble_id, 'ans': ans, 'score':score}
 		connection.send(json.dumps(js))
 	except socket.timeout:
 		print 'time out'

@@ -11,8 +11,8 @@ class BubbleGame(tk.Frame):
         self.master.title('Bubble game')
         self._box_width = 300
         self._box_height = 300
-        self._r = 15
         self._user_name = 'test'
+        self._r = 15
         self._image_id = 1
         self._ans = 1
         self._point = 0
@@ -20,11 +20,15 @@ class BubbleGame(tk.Frame):
         self._true_image = ImageTk.PhotoImage(Image.open('true_image.png').resize((150, 150)))
         self._false_image = ImageTk.PhotoImage(Image.open('false_image.png').resize((150, 150)))
 
+        self._name_text = tk.Entry(self)
+        self._name_text.place(x = 330, y = 100, width = 80)
+        
+        self._change_name_button = tk.Button(self, text = 'change user name',command = self.change_name)
+        self._change_name_button.place(x = 500, y = 100)
+
         self.init_image_files()
-        # This allows the size specification to take effect
         self.pack_propagate(0)
  
-        # We'll use the flexible pack layout manager
         self.pack()
         
         self._r_label = tk.Label(self, text = 'Radius : {:d}'.format(self._r))
@@ -82,9 +86,14 @@ class BubbleGame(tk.Frame):
         
 
       #  self.mask_image(img)
+    def change_name(self):
+        self._user_name = self._name_text.get()
+        self._user_label.configure(text = 'User name : {:s}'.format(self._user_name))
+        self.focus_set()
 
     def init_image_files(self):
-        self._image_path = '/Users/tenstep/Datasets/CUB_200_2011/CUB_200_2011/images/'
+        #@@change to your image path
+        self._image_path = '/Users/tenstep/Datasets/CUB_200_2011/CUB_200_2011/images/' 
         self._image_name = ['default.png']
         images_index_file = open('images.txt', 'r')
         for line in images_index_file:
@@ -147,7 +156,7 @@ class BubbleGame(tk.Frame):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  
         sock.connect(('localhost', 8001))
         n = len(self._bubbles)
-        js = {'user_name':self._user_name, 'image_id':self._image_id, 'bubble_num':n}
+        js = {'user_name':self._user_name, 'image_id':self._image_id, 'bubble_num':n, 'point':self._point}
         for i in range(n):
             x = self._bubbles[i][0]
             y = self._bubbles[i][1]
@@ -161,6 +170,8 @@ class BubbleGame(tk.Frame):
         #print 'buf ', buf
         recv = json.loads(buf)
         self._ans = recv['ans']
+        self._total_score = recv['score']
+        self._score_label.configure(text = 'Total score : {:d}'.format(self._total_score))
         #print 'recv', recv
         sock.close()
         return recv
@@ -172,6 +183,7 @@ class BubbleGame(tk.Frame):
             self._score_label.configure(text = 'Total score : {:d}'.format(self._total_score))
         else:
             self._resluts.configure(image = self._false_image) 
+            self._point = 0
         recv = self.submit()
         self.init_image(recv['img_id_1'], recv['img_id_2'], recv['bubble_id'])
 
@@ -182,11 +194,11 @@ class BubbleGame(tk.Frame):
             self._score_label.configure(text = 'Total score = {:d}'.format(self._total_score))
         else:
             self._resluts.configure(image = self._false_image)
+            self._point = 0
         recv = self.submit()
         self.init_image(recv['img_id_1'], recv['img_id_2'], recv['bubble_id'])
 
     def callback(self, event):
-        #print 'generate bubble at ', event.x, event.y
         self._point = self._point - self._r;
         self._point_label.configure(text = 'Point = {:d}'.format(self._point))
         if (self._point < 0):
